@@ -604,5 +604,9 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
 </script>
+  <div id="ml-status" role="status" aria-live="polite">
+  ML test not started
+</div>
+<button id="ml-test-button" type="button">Test ML Model</button>
 </body>
 </html>
