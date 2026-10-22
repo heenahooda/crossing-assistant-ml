@@ -1,51 +1,89 @@
 
-import * as tf from "https://esm.sh/@tensorflow/tfjs";
-import * as tflite from "https://esm.sh/@tensorflow/tfjs-tflite";
-
 const MODEL_URL =
-  "https://heenahooda.github.io/crossing-assistant-ml/models/train_v2_efficientnet_b0_softdelta_w0.50_float16.tflite";
+  "./models/train_v2_efficientnet_b0_softdelta_w0.50_float16.tflite";
+
+let modelPromise = null;
 
 export async function testModel() {
   const status = document.getElementById("ml-status");
+  const button = document.getElementById("ml-test-button");
+
+  const setStatus = (message) => {
+    if (status) status.textContent = message;
+  };
+
+  if (!window.tf || !window.tflite) {
+    setStatus("ML runtime did not load. Check your internet connection.");
+    return;
+  }
+
+  if (button) button.disabled = true;
+
+  let input = null;
+  let outputs = null;
 
   try {
-    status.textContent = "Loading on-device ML runtime…";
+    setStatus("Loading model...");
 
-    await tf.ready();
+    if (!modelPromise) {
+      window.tflite.setWasmPath(
+        "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-tflite@0.0.1-alpha.10/dist/"
+      );
 
-    status.textContent = "Loading model…";
-    const model = await tflite.loadTFLiteModel(MODEL_URL);
+      modelPromise = window.tflite.loadTFLiteModel(MODEL_URL);
+    }
 
-    // Test the model with a zero-filled input of the required shape.
-    // This tests execution only; it is NOT a real camera prediction.
-    const input = tf.zeros([1, 512, 256, 3]);
+    const model = await modelPromise;
 
-    status.textContent = "Testing model execution…";
-    const outputs = model.predict(input);
+    setStatus("Model loaded. Running test...");
 
-    const tensors = Array.isArray(outputs) ? outputs : [outputs];
-    const details = [];
+    input = window.tf.zeros([1, 512, 256, 3], "float32");
+    outputs = model.predict(input);
 
-    for (let i = 0; i < tensors.length; i++) {
-      const tensor = tensors[i];
-      details.push({
-        output: i,
-        shape: tensor.shape,
-        sample: Array.from(await tensor.data()).slice(0, 5)
+    const tensors = Array.isArray(outputs)
+      ? outputs
+      : outputs && outputs.shape
+        ? [outputs]
+        : Object.values(outputs || {});
+
+    const descriptions = tensors.map((tensor, index) => {
+      const shape = tensor && tensor.shape
+        ? tensor.shape.join(" × ")
+        : "unknown shape";
+
+      return `Output ${index + 1}: ${shape}`;
+    });
+
+    setStatus(
+      "Model inference ran on dummy input. " +
+      descriptions.join("; ") +
+      ". Live camera detection is not connected or verified."
+    );
+  } catch (error) {
+    console.error("ML model test failed:", error);
+    modelPromise = null;
+
+    setStatus(
+      "ML test failed: " +
+      (error?.message || String(error))
+    );
+  } finally {
+    if (input) input.dispose();
+
+    if (outputs) {
+      const tensors = Array.isArray(outputs)
+        ? outputs
+        : outputs && outputs.shape
+          ? [outputs]
+          : Object.values(outputs || {});
+
+      tensors.forEach((tensor) => {
+        if (tensor && typeof tensor.dispose === "function") {
+          tensor.dispose();
+        }
       });
     }
 
-    console.log("Model output details:", details);
-    status.textContent =
-      "Model executed. Check the browser console for output details.";
-
-    input.dispose();
-    tensors.forEach(tensor => tensor.dispose());
-    model.dispose();
-
-  } catch (error) {
-    console.error("ML test failed:", error);
-    status.textContent =
-      "ML test failed: " + (error.message || String(error));
+    if (button) button.disabled = false;
   }
 }
