@@ -1,5 +1,5 @@
 // Offline cache for the app shell. Change the version number whenever you edit any file.
-const CACHE = 'crossing-assistant-ml-v1';
+const CACHE = 'crossing-assistant-ml-v2';
 const FILES = ['./', './index.html', './warm.html', './manifest.webmanifest',
                './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
 
