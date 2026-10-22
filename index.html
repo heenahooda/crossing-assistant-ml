@@ -94,7 +94,13 @@ ol.pipe li+li::before{content:"\2193";text-align:center;color:var(--muted);margi
   </div>
 </header>
 <main id="main">
+ <div id="ml-status" role="status" aria-live="polite">
+  ML test not started
+</div>
 
+<button id="ml-test-button" type="button">
+  Test ML Model
+</button>
 <!-- HOME -->
 <section class="screen active" id="screen-home" aria-labelledby="h-home">
   <h1 id="h-home" tabindex="-1" data-i18n="title">Crossing Assistant</h1>
@@ -604,9 +610,12 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
 </script>
-  <div id="ml-status" role="status" aria-live="polite">
-  ML test not started
-</div>
-<button id="ml-test-button" type="button">Test ML Model</button>
+<script type="module">
+  import { testModel } from "./ml-test.js";
+
+  document
+    .getElementById("ml-test-button")
+    .addEventListener("click", testModel);
+</script>
 </body>
 </html>
