@@ -291,7 +291,8 @@ en: {
   red:"Red pedestrian signal detected. Please wait.", green:"Green pedestrian signal detected. Check for traffic before you cross.",
   uncertain:"The crossing signal could not be confirmed. Please wait.",
   camDenied:"Camera permission was denied. Detection cannot run.", camNone:"No camera was found. Detection cannot run.", camFail:"The camera could not start. Detection cannot run.",
-  testSpeechMsg:"This is a test of spoken guidance.", vibUnsupported:"Vibration is not supported on this device.", langSet:"Language set to English."
+  testSpeechMsg:"This is a test of spoken guidance.", vibUnsupported:"Vibration is not supported on this device.", langSet:"Language set to English."time30: "Reminder: Please pause and check your surroundings.",
+time60: "One minute has passed. Please stop in a safe place and reassess your surroundings.",
 },
 ja: {
   title:"横断アシスタント", subtitle:"歩行者のためのアクセシブルな支援", skip:"メインコンテンツへ移動", langGroup:"言語",
@@ -337,7 +338,8 @@ ja: {
   red:"歩行者用の赤信号を検出しました。待ってください。", green:"歩行者用の青信号を検出しました。渡る前に車の通行を確認してください。",
   uncertain:"信号を確認できませんでした。待ってください。",
   camDenied:"カメラの許可がありません。検出は実行できません。", camNone:"カメラが見つかりません。検出は実行できません。", camFail:"カメラを開始できませんでした。検出は実行できません。",
-  testSpeechMsg:"音声ガイドのテストです。", vibUnsupported:"この端末では振動に対応していません。", langSet:"言語を日本語に設定しました。"
+  testSpeechMsg:"音声ガイドのテストです。", vibUnsupported:"この端末では振動に対応していません。", langSet:"言語を日本語に設定しました。" time30: "周囲の状況を確認してください。",
+time60: "1分が経過しました。安全な場所で立ち止まり、周囲の状況を再確認してください。",
 }
 };
 let lang = 'en';
@@ -485,6 +487,31 @@ function renderMainBtn(){
 function startAssistance(){
   if(active) return;
   active = true; gesture = true;
+    // Timed reminders while assistance is active.
+  clearInterval(window.crossingReminderTimer);
+
+  const startedAt = Date.now();
+  let reminded30 = false;
+  let reminded60 = false;
+
+  window.crossingReminderTimer = setInterval(() => {
+    if (!active) {
+      clearInterval(window.crossingReminderTimer);
+      return;
+    }
+
+    const elapsed = Date.now() - startedAt;
+
+    if (elapsed >= 30000 && !reminded30) {
+      reminded30 = true;
+      say('time30', { urgent: true, remember: false });
+    }
+
+    if (elapsed >= 60000 && !reminded60) {
+      reminded60 = true;
+      say('time60', { urgent: true, remember: false });
+    }
+  }, 1000);
   if(current !== 'home') show('home');
   renderMainBtn(); $('livePanel').hidden = false; resetDetection();
   say('startAssist'); haptic('start');
@@ -494,6 +521,7 @@ function startAssistance(){
 function stopAssistance(){
   if(!active) return;
   active = false;
+    clearInterval(window.crossingReminderTimer);
   stopStream(); S.cam = 'off';
   renderMainBtn(); $('livePanel').hidden = true;
   say('stopAssist', {remember:false});
