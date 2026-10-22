@@ -1,7 +1,7 @@
 {
-  "name": "Smart Crossing Assistant",
+  "name": "Crossing Assistant",
   "short_name": "Crossing",
-  "description": "Voice and haptic road-crossing support for blind and visually impaired pedestrians (HCI prototype)",
+  "description": "Accessible voice and vibration road-crossing support for blind and visually impaired pedestrians (research prototype)",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

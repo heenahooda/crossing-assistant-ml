@@ -1,57 +1,45 @@
-# Smart Crossing Assistant: install on your phone
+# Crossing Assistant (redesign): put this in the `crossing-assistant-ml` repo only
 
-This folder is a PWA (Progressive Web App). Once it is hosted on HTTPS, you install it
-from the browser and it opens like a normal app: its own icon, full screen, and it works offline.
+Leave your existing `crossing-assistant` repository untouched. Upload these files to
+`crossing-assistant-ml` (replace its index.html / warm.html / sw.js / manifest / icons).
 
-Files:
-- index.html          main app (dark, high-contrast version)
-- warm.html           alternative warm/light version (open /warm.html to use it)
-- manifest.webmanifest  app name, icons, colours
-- sw.js               service worker (offline cache)
-- icon-192.png, icon-512.png, icon-maskable-512.png
+Files
+- index.html   dark, high-contrast theme (main app)
+- warm.html    warm/light theme, same structure and behaviour
+- manifest.webmanifest, sw.js, icon-*.png   installable-app files (PWA)
 
-## Step 1: Put it online (free, about 5 minutes) with GitHub Pages
-1. github.com -> New repository -> name it `crossing-assistant` -> Public -> Create.
-2. "uploading an existing file" -> drag ALL the files from this folder (not the folder itself) -> Commit.
-3. Settings -> Pages -> Source: "Deploy from a branch" -> Branch: main, folder: / (root) -> Save.
-4. After about 1 minute your app is live at:
-   https://heenahooda.github.io/crossing-assistant/
-   (Quicker alternative: drag the folder onto https://app.netlify.com/drop)
+## Install (same as before)
+1. Upload all files (not the folder) to the repo, then Settings -> Pages -> Deploy from branch -> main / root.
+2. Android Chrome: open the link -> menu -> Install app. iPhone Safari: Share -> Add to Home Screen.
+3. After uploading a new version, change `crossing-assistant-ml-v1` to `-v2` in sw.js so phones update.
 
-Camera, microphone and installing only work on HTTPS, which both options give you.
+## What changed (your 6 points)
+1. Navigation: the four tabs are gone. Home = one big control. Settings, Help & Instructions,
+   Research testing and About are separate screens, each with a Back button.
+2. Main action: one large START ASSISTANCE button that turns into STOP ASSISTANCE and announces the
+   state aloud.
+3. Microphone: no more "tap to listen". Home shows a Status list: Audio guidance, Voice commands,
+   Vibration feedback, Camera, Detection. "Listening" appears only after the browser confirms the mic
+   is really listening; otherwise it says Off / Unavailable on this device / permission needed.
+4. Emergency / Help: lives on the Help screen. It says clearly that the prototype cannot contact anyone,
+   lists 110 (police) and 119 (fire/ambulance) for Japan, and the practice button is labelled demo only.
+5. The process diagram moved to About this project. VR test moved to Research & testing.
+6. Accessibility: headings and landmarks, focus moves to each screen's heading, labelled switches,
+   skip link, live regions for screen readers, 44-56 px+ targets, visible focus ring, reduced-motion
+   support, no information by colour alone, failures are spoken and shown (camera, audio, mic).
+   Spoken guidance can be switched off in Settings so TalkBack/VoiceOver users do not hear everything twice.
 
-## Step 2: Install on the phone
-Android (Chrome, recommended):
-  Open the link -> menu (three dots) -> "Install app" (or "Add to Home screen").
-iPhone (Safari):
-  Open the link -> Share button -> "Add to Home Screen".
+Safety wording: the app never says "safe to cross" or "you may cross". Green now says
+"Green pedestrian signal detected. Check for traffic before you cross." and the home screen always shows
+"Research prototype · Not validated for independent road crossing".
 
-## What works where
-| Feature                         | Android Chrome | iPhone Safari |
-|---------------------------------|:--------------:|:-------------:|
-| Install as app + offline        | yes            | yes           |
-| Camera preview                  | yes            | yes           |
-| Spoken guidance (EN / 日本語)    | yes (needs a Japanese voice installed) | yes |
-| Voice commands (start/stop/help)| yes            | limited / often not available |
-| Vibration (haptic)              | yes            | no (Apple does not allow it in web apps) |
+## About the .tflite model (important)
+The app does NOT run your .tflite yet, and says so: Detection shows "Simulated (no model loaded)".
+Putting the file in the repo does not make the camera use it. To wire it up the app must load the model with a
+TFLite/TensorFlow.js runtime, convert each camera frame to the model's input size and format, run it, and
+decode the output tensors into crosswalk / signal state / distance. For that I need: the .tflite file (or its
+input and output shapes), the class names, the input size and normalisation, and any confidence threshold.
 
-For the demo, use an Android phone with Chrome.
-Allow Camera and Microphone when asked (first launch only).
-
-## Updating the app later
-Edit the files, upload them again, and change `crossing-assistant-v1` to `-v2` in sw.js
-so phones pick up the new version.
-
-## Optional: a real APK (Android installer file)
-Easiest: go to https://www.pwabuilder.com, paste your hosted URL, choose Android, download the package.
-Or with Capacitor (needs Node and Android Studio):
-  npm init -y
-  npm i @capacitor/core @capacitor/cli @capacitor/android
-  npx cap init "Smart Crossing Assistant" com.heena.crossing --web-dir=.
-  npx cap add android
-  npx cap sync
-  npx cap open android      (then Build -> Build APK in Android Studio)
-Add CAMERA, RECORD_AUDIO and VIBRATE permissions in AndroidManifest.xml.
-Note: the browser speech-recognition API is not guaranteed inside a Capacitor WebView,
-so for voice commands in an APK you would add a speech-recognition plugin. The hosted PWA
-in Chrome needs no extra work.
+## Browser support
+Android Chrome: everything. iPhone Safari: install, camera and speech output work; vibration is blocked by Apple
+and voice commands are limited, and the Status list will say so honestly.
